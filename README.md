@@ -112,7 +112,32 @@ http_port_t                    tcp      3435, 80, 81, 443, 488, 8008, 8009, 8443
 pegasus_http_port_t            tcp      5988
 ```
 # формирование и установка модуля SELinux.
+Откатим изменения
+```ruby
+[root@selinux vagrant]# semanage port -d -t http_port_t -p tcp 3435
+```
+Теперь посмотрим, какой модуль надо доустановить.
+```ruby
+[root@selinux vagrant]# whereis nginx
+nginx: /usr/sbin/nginx /usr/lib64/nginx /etc/nginx /usr/share/nginx /usr/share/man/man3/nginx.3pm.gz /usr/share/man/man8/nginx.8.gz
+[root@selinux vagrant]# ls -Z /usr/sbin/nginx
+-rwxr-xr-x. root root system_u:object_r:httpd_exec_t:s0 /usr/sbin/nginx
+[root@selinux vagrant]# audit2allow -M httpd_add --debug < /var/log/audit/audit.log
+******************** IMPORTANT ***********************
+To make this policy package active, execute:
 
+semodule -i httpd_add.pp
+[root@selinux vagrant]# systemctl restart nginx
+[root@selinux vagrant]# systemctl status nginx
+● nginx.service - The nginx HTTP and reverse proxy server
+   Loaded: loaded (/usr/lib/systemd/system/nginx.service; enabled; vendor preset: disabled)
+   Active: active (running) since Wed 2021-01-20 13:48:21 UTC; 1s ago
 
+[root@selinux vagrant]# netstat -tulpn | grep nginx
+tcp        0      0 0.0.0.0:3435            0.0.0.0:*               LISTEN      27549/nginx: master
+tcp6       0      0 :::3435                 :::*                    LISTEN      27549/nginx: master
+
+````
+как видно наш nginx  прекрасно работает на нашем выбранном порту
 
 
